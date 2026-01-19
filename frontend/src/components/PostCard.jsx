@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import api, { API_BASE_URL } from "../services/api";
 import CommentModal from "./CommentModal";
 import { useAuth } from "../context/AuthContext";
 
@@ -56,7 +56,7 @@ export default function PostCard({ post, onUpdate, onDelete }) {
       {post.image_url && (
         <div className="w-full h-56 overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50">
           <img
-            src={`http://localhost:5000${post.image_url}`}
+            src={`${API_BASE_URL}${post.image_url}`}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             alt="post"
           />

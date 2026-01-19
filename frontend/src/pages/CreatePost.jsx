@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import api from "../services/api";
+import api, { API_BASE_URL } from "../services/api";
 
 export default function CreatePost() {
   const [text, setText] = useState("");
@@ -86,7 +86,7 @@ export default function CreatePost() {
             {existingImageUrl && !image && (
               <div className="mb-2">
                 <img 
-                  src={`http://localhost:5000${existingImageUrl}`} 
+                  src={`${API_BASE_URL}${existingImageUrl}`} 
                   alt="Current" 
                   className="max-h-32 rounded-lg"
                 />
