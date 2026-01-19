@@ -1,13 +1,24 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
 
 export default function CreatePost() {
   const [text, setText] = useState("");
   const [image, setImage] = useState(null);
+  const [existingImageUrl, setExistingImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const editPost = location.state?.post;
+  const isEditMode = !!editPost;
+
+  useEffect(() => {
+    if (editPost) {
+      setText(editPost.text || "");
+      setExistingImageUrl(editPost.image_url || "");
+    }
+  }, [editPost]);
 
   const submitPost = async (e) => {
     e.preventDefault();
@@ -19,12 +30,27 @@ export default function CreatePost() {
       formData.append("text", text);
       if (image) formData.append("image", image);
 
-      await api.post("/posts", formData);
+      if (isEditMode) {
+        await api.put(`/posts/${editPost._id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        await api.post("/posts", formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
       
       // Redirect to home page after successful post
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create post");
+      console.error('Error updating/creating post:', err);
+      console.error('Error response:', err.response);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || `Failed to ${isEditMode ? "update" : "create"} post`;
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -33,7 +59,9 @@ export default function CreatePost() {
   return (
     <div className="max-w-2xl mx-auto mt-10 px-4">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">✏️ Create New Post</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+          {isEditMode ? "✏️ Edit Post" : "✏️ Create New Post"}
+        </h2>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -55,6 +83,16 @@ export default function CreatePost() {
 
           <div>
             <label className="block text-sm font-medium mb-2">📷 Add Image (Optional)</label>
+            {existingImageUrl && !image && (
+              <div className="mb-2">
+                <img 
+                  src={`http://localhost:5000${existingImageUrl}`} 
+                  alt="Current" 
+                  className="max-h-32 rounded-lg"
+                />
+                <p className="text-xs text-gray-500 mt-1">Current image</p>
+              </div>
+            )}
             <input 
               type="file" 
               accept="image/*"
@@ -72,7 +110,7 @@ export default function CreatePost() {
               disabled={loading}
               className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition font-medium"
             >
-              {loading ? "Posting..." : "🚀 Post"}
+              {loading ? (isEditMode ? "Updating..." : "Posting...") : (isEditMode ? "✏️ Update" : "🚀 Post")}
             </button>
             <button
               type="button"

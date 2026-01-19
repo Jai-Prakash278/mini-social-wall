@@ -27,6 +27,10 @@ export default function Feed() {
     setPosts(posts.map(p => p._id === updatedPost._id ? updatedPost : p));
   };
 
+  const deletePostFromState = (postId) => {
+    setPosts(posts.filter(p => p._id !== postId));
+  };
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto mt-10">
@@ -58,14 +62,17 @@ export default function Feed() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto mt-6 px-4 pb-8">
-      {posts.map((post) => (
-        <PostCard 
-          key={post._id} 
-          post={post} 
-          onUpdate={updatePostInState}
-        />
-      ))}
+    <div className="max-w-7xl mx-auto mt-6 px-4 pb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts.map((post) => (
+          <PostCard 
+            key={post._id} 
+            post={post} 
+            onUpdate={updatePostInState}
+            onDelete={deletePostFromState}
+          />
+        ))}
+      </div>
     </div>
   );
 }

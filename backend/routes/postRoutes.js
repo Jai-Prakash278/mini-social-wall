@@ -16,6 +16,13 @@ postRouter.get(
 postRouter.post('/:id/like', verifyToken, postController.toggleLike);
 postRouter.post('/:id/comment', verifyToken, postController.addComment);
 postRouter.get('/:id/comments', postController.getComments);
+postRouter.put(
+    '/:id',
+    verifyToken,
+    postController.upload.single('image'),
+    postController.updatePost
+);
+postRouter.delete('/:id', verifyToken, postController.deletePost);
 
 
 module.exports = postRouter;

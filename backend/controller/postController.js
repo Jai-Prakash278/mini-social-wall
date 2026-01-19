@@ -94,3 +94,72 @@ exports.getComments = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 }
+
+exports.updatePost = async (req, res) => {
+    try {
+        const { text } = req.body;
+        
+        if (!text) {
+            return res.status(400).json({ error: "Text is required" });
+        }
+        
+        const post = await Post.findById(req.params.id);
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // Check if user is the owner of the post
+        if (post.user.toString() !== req.user.id.toString()) {
+            return res.status(403).json({ error: "Not authorized to update this post" });
+        }
+
+        post.text = text;
+        if (req.file) {
+            // Delete old image if exists
+            if (post.image_url) {
+                const oldImagePath = path.join(__dirname, '../public', post.image_url);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+            post.image_url = `/uploads/${req.file.filename}`;
+        }
+
+        await post.save();
+        res.json(post);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
+exports.deletePost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // Check if user is the owner of the post
+        if (post.user.toString() !== req.user.id.toString()) {
+            return res.status(403).json({ error: "Not authorized to delete this post" });
+        }
+
+        // Delete image if exists
+        if (post.image_url) {
+            const imagePath = path.join(__dirname, '../public', post.image_url);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+
+        // Delete all comments associated with the post
+        await Comment.deleteMany({ post_id: req.params.id });
+
+        await Post.findByIdAndDelete(req.params.id);
+        res.json({ message: "Post deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
